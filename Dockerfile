@@ -221,8 +221,8 @@ ADD https://dlcdn.apache.org/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${
 RUN tar xvzf /tmp/apache-tomcat-${TOMCAT_VER}.tar.gz --strip-components 1 --directory /opt/tomcat
 RUN chmod +x /opt/tomcat/bin/*.sh
 
-RUN groupadd tomcat && \
-useradd -s /bin/false -g tomcat -d /opt/tomcat tomcat
+RUN groupadd -g 1001 tomcat && \
+useradd -u 1001 -s /bin/false -g tomcat -d /opt/tomcat tomcat
 
 RUN chgrp -R tomcat /opt/tomcat && \
 chmod -R g+r /opt/tomcat/conf && \
