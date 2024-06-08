@@ -1,7 +1,7 @@
 ARG ALPINE_BASE_IMAGE=latest
 FROM alpine:${ALPINE_BASE_IMAGE} AS builder
 
-ARG VERSION="1.5.4"
+ARG VERSION="1.5.5"
 ARG TARGETPLATFORM
 
 ENV \
@@ -160,9 +160,9 @@ ARG APPLICATION="guacamole"
 ARG BUILD_RFC3339="2023-04-04T13:00:00Z"
 ARG REVISION="local"
 ARG DESCRIPTION="Fully Packaged and Multi-Arch Guacamole container"
-ARG PACKAGE="flcontainers/guacamole"
+ARG PACKAGE="motababravo/guacamole"
 ARG VERSION="1.5.4"
-ARG POSTGRES_HOST_AUTH_METHOD="trust"
+#ARG POSTGRES_HOST_AUTH_METHOD="trust"
 
 LABEL org.opencontainers.image.ref.name="${PACKAGE}" \
   org.opencontainers.image.created=$BUILD_RFC3339 \
@@ -175,16 +175,11 @@ LABEL org.opencontainers.image.ref.name="${PACKAGE}" \
   org.opencontainers.image.version=$VERSION \
   org.opencontainers.image.url="https://hub.docker.com/r/${PACKAGE}/"
 
-ENV \
-  GUAC_VER=${VERSION} \
-  GUACAMOLE_HOME=/app/guacamole \
-  CATALINA_HOME=/opt/tomcat \
-  PG_MAJOR=13 \
-  TOMCAT_VER=9.0.83 \
-  PGDATA=/config/postgres \
-  POSTGRES_USER=guacamole \
-  POSTGRES_DB=guacamole_db \
-  POSTGRES_HOST_AUTH_METHOD=${POSTGRES_HOST_AUTH_METHOD}
+ENV GUAC_VER=${VERSION}
+ENV GUACAMOLE_HOME=/app/guacamole
+ENV CATALINA_HOME=/opt/tomcat
+#  PG_MAJOR=13
+ENV TOMCAT_VER=9.0.89
 
 # Runtime environment
 ENV LC_ALL=C.UTF-8
@@ -210,7 +205,6 @@ RUN apk add --no-cache                \
         ghostscript                   \
         netcat-openbsd                \
         openjdk11-jdk                 \
-        postgresql13                  \
         shadow                        \
         terminus-font                 \
         ttf-dejavu                    \
@@ -240,11 +234,9 @@ chmod 777 -R /opt/tomcat/logs/
 RUN set -x \
   && rm -rf ${CATALINA_HOME}/webapps/ROOT \
   && curl -SLo ${CATALINA_HOME}/webapps/ROOT.war "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/${GUAC_VER}/binary/guacamole-${GUAC_VER}.war" \
-  && curl -SLo ${GUACAMOLE_HOME}/lib/postgresql-42.6.0.jar "https://jdbc.postgresql.org/download/postgresql-42.6.0.jar" \
+  && curl -SLo ${GUACAMOLE_HOME}/lib/mysql-connector-j-8.3.0.jar "https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.3.0/mysql-connector-j-8.3.0.jar" \
   && curl -SLo ${GUACAMOLE_HOME}/guacamole-auth-jdbc-${GUAC_VER}.tar.gz "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/${GUAC_VER}/binary/guacamole-auth-jdbc-${GUAC_VER}.tar.gz" \
   && tar -xzf ${GUACAMOLE_HOME}/guacamole-auth-jdbc-${GUAC_VER}.tar.gz \
-  && cp -R ${GUACAMOLE_HOME}/guacamole-auth-jdbc-${GUAC_VER}/postgresql/guacamole-auth-jdbc-postgresql-${GUAC_VER}.jar ${GUACAMOLE_HOME}/extensions/ \
-  && cp -R ${GUACAMOLE_HOME}/guacamole-auth-jdbc-${GUAC_VER}/postgresql/schema ${GUACAMOLE_HOME}/ \
   && rm -rf ${GUACAMOLE_HOME}/guacamole-auth-jdbc-${GUAC_VER} ${GUACAMOLE_HOME}/guacamole-auth-jdbc-${GUAC_VER}.tar.gz
 
 ###############################################################################
@@ -293,14 +285,14 @@ RUN set -xe \
 ###############################################################################
 
 # Finishing Container configuration
-ENV PATH=/usr/lib/postgresql/${PG_MAJOR}/bin:$PATH
+#ENV PATH=/usr/lib/postgresql/${PG_MAJOR}/bin:$PATH
 ENV GUACAMOLE_HOME=/config/guacamole
 
 # Copy files
 COPY filefs /
 RUN chmod +x /usr/local/bin/*.sh
 RUN chmod +x /etc/init.d/tomcat
-RUN chmod +x /etc/init.d/postgres
+#RUN chmod +x /etc/init.d/postgres
 RUN chmod +x /startup.sh
 
 # Hack for windows based host (CRLF / LF)
